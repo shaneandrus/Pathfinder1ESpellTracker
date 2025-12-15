@@ -35,7 +35,7 @@ let spellsCache: Spell[] | null = null;
 export async function loadSpells(): Promise<Spell[]> {
   if (spellsCache) return spellsCache;
 
-  const response = await fetch('/spells.csv');
+  const response = await fetch(`${import.meta.env.BASE_URL}spells.csv`);
   const csvText = await response.text();
   
   return new Promise((resolve, reject) => {
