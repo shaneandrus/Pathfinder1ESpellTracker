@@ -26,7 +26,8 @@ export function SpellbookView() {
   });
   
   const activeClassId = selectedClassId || spellcastingClasses[0]?.classId;
-  const activeClassDef = activeClassId ? getClassById(activeClassId) : null;
+  const _activeClassDef = activeClassId ? getClassById(activeClassId) : null;
+  void _activeClassDef; // Suppress unused variable warning
   
   // Get all known spells for the selected class
   const knownSpells = useMemo(() => {

@@ -52,7 +52,7 @@ export function calculateSpellSlots(
 
   const effectiveLevel = calculateEffectiveCasterLevel(character, charClass.classId);
   const progression = classDef.spellProgression[effectiveLevel] || [];
-  const homebrewSettings = character.homebrewSettings || { spellSlotOverrides: [] };
+  const homebrewSettings = character.homebrewSettings || { spellSlotOverrides: [], allowedSources: [] };
 
   const slots: { [spellLevel: number]: SpellSlotState } = {};
 
