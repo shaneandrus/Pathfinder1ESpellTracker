@@ -49,4 +49,44 @@
   .spell-slot-used {
     @apply border-gray-600 bg-gray-700/50 hover:bg-gray-600/50;
   }
+
+  .die-face {
+    @apply w-16 h-16 rounded-xl border-2 flex items-center justify-center text-2xl font-black bg-gray-900 text-white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  }
+
+  .die-spin {
+    animation: die-tumble 0.15s ease-in-out infinite;
+  }
+
+  .die-land {
+    animation: die-bounce 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+
+  .dice-rolling {
+    animation: dice-shake 0.1s ease-in-out infinite;
+  }
+}
+
+@keyframes die-tumble {
+  0% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(8deg) scale(1.05); }
+  50% { transform: rotate(-5deg) scale(0.98); }
+  75% { transform: rotate(6deg) scale(1.03); }
+  100% { transform: rotate(0deg) scale(1); }
+}
+
+@keyframes die-bounce {
+  0% { transform: scale(0.8) rotate(-10deg); opacity: 0.7; }
+  60% { transform: scale(1.15) rotate(3deg); opacity: 1; }
+  80% { transform: scale(0.97) rotate(-1deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+@keyframes dice-shake {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  50% { transform: translateX(2px); }
+  75% { transform: translateX(-1px); }
+  100% { transform: translateX(0); }
 }

@@ -12,7 +12,7 @@ interface AppState {
   activeCharacterId: string | null;
   spells: Spell[];
   isLoading: boolean;
-  currentView: 'characters' | 'slots' | 'spells' | 'spellbook' | 'manage' | 'addSpell' | 'settings';
+  currentView: 'characters' | 'slots' | 'spells' | 'spellbook' | 'manage' | 'addSpell' | 'settings' | 'dice';
 }
 
 type Action =

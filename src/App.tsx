@@ -8,6 +8,7 @@ import { SpellbookView } from './views/SpellbookView';
 import { AddSpellView } from './views/AddSpellView';
 import { ManageClassesView } from './views/ManageClassesView';
 import { SettingsView } from './views/SettingsView';
+import { DiceRollerView } from './views/DiceRollerView';
 import { AuthModal } from './components/AuthModal';
 
 function AppContent() {
@@ -42,6 +43,8 @@ function AppContent() {
         return <ManageClassesView />;
       case 'settings':
         return <SettingsView />;
+      case 'dice':
+        return <DiceRollerView />;
       default:
         return <CharacterListView />;
     }
@@ -125,6 +128,12 @@ function AppContent() {
               onClick={() => setView('manage')}
               icon="⚙️"
               label="Classes"
+            />
+            <NavButton
+              active={state.currentView === 'dice'}
+              onClick={() => setView('dice')}
+              icon="🎲"
+              label="Dice"
             />
             <NavButton
               active={state.currentView === 'characters'}
