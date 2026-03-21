@@ -1,6 +1,4 @@
-import { useState } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
-import { AuthProvider, useAuth } from './context/AuthContext';
 import { CharacterListView } from './views/CharacterListView';
 import { SpellSlotsView } from './views/SpellSlotsView';
 import { SpellListView } from './views/SpellListView';
@@ -9,14 +7,11 @@ import { AddSpellView } from './views/AddSpellView';
 import { ManageClassesView } from './views/ManageClassesView';
 import { SettingsView } from './views/SettingsView';
 import { DiceRollerView } from './views/DiceRollerView';
-import { AuthModal } from './components/AuthModal';
 
 function AppContent() {
   const { state, setView, activeCharacter } = useApp();
-  const { user, isLoading: authLoading, isConfigured, signOut } = useAuth();
-  const [showAuthModal, setShowAuthModal] = useState(false);
 
-  if (state.isLoading || authLoading) {
+  if (state.isLoading) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="text-center">
@@ -64,24 +59,6 @@ function AppContent() {
           <div className="flex items-center gap-2">
             {activeCharacter && (
               <span className="text-sm text-gray-400 hidden sm:inline">{activeCharacter.name}</span>
-            )}
-            {isConfigured && (
-              user ? (
-                <button
-                  onClick={signOut}
-                  className="text-xs bg-gray-700 hover:bg-gray-600 text-gray-300 px-2 py-1 rounded transition-colors"
-                  title={`Signed in as ${user.email}`}
-                >
-                  ☁️ Sync'd
-                </button>
-              ) : (
-                <button
-                  onClick={() => setShowAuthModal(true)}
-                  className="text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-2 py-1 rounded transition-colors"
-                >
-                  ☁️ Sign In
-                </button>
-              )
             )}
             <button
               onClick={() => setView('settings')}
@@ -145,8 +122,6 @@ function AppContent() {
         </nav>
       )}
 
-      {/* Auth Modal */}
-      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
     </div>
   );
 }
@@ -174,11 +149,9 @@ function NavButton({ active, onClick, icon, label }: NavButtonProps) {
 
 function App() {
   return (
-    <AuthProvider>
-      <AppProvider>
-        <AppContent />
-      </AppProvider>
-    </AuthProvider>
+    <AppProvider>
+      <AppContent />
+    </AppProvider>
   );
 }
 

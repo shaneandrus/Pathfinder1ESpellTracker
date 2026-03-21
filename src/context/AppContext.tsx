@@ -1,11 +1,9 @@
-import { createContext, useContext, useReducer, useEffect, useRef, type ReactNode } from 'react';
+import { createContext, useContext, useReducer, useEffect, type ReactNode } from 'react';
 import type { Character, Spell, CharacterClass, SpellSlotOverride } from '../types';
 import { DEFAULT_HOMEBREW_SETTINGS } from '../types';
 import { loadCharacters, saveCharacters, createCharacter, toggleSpellSlot, resetSpellSlots, addKnownSpell, removeKnownSpell, updateCharacterClasses, toggleSpellPrepared, clearPreparedSpells, recalculateCharacterSpellSlots } from '../store/characterStore';
 import { loadSpells } from '../data/spells';
 import { setSpellSlotOverride, removeSpellSlotOverride, clearClassOverrides } from '../store/settingsStore';
-import { useAuth } from './AuthContext';
-import { syncCharacters, saveCharacterToCloud, deleteCharacterFromCloud } from '../services/cloudSync';
 
 interface AppState {
   characters: Character[];
@@ -91,10 +89,8 @@ const AppContext = createContext<AppContextValue | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState);
-  const { user } = useAuth();
-  const syncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Load initial data
+  // Load initial data from localStorage
   useEffect(() => {
     async function init() {
       try {
@@ -103,28 +99,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
           Promise.resolve(loadCharacters()),
         ]);
         dispatch({ type: 'SET_SPELLS', payload: spells });
-
-        // If user is logged in, sync with cloud
-        if (user) {
-          try {
-            const synced = await syncCharacters(user.id, localCharacters);
-            dispatch({ type: 'SET_CHARACTERS', payload: synced });
-            saveCharacters(synced); // Update local storage with synced data
-            if (synced.length > 0) {
-              dispatch({ type: 'SET_ACTIVE_CHARACTER', payload: synced[0].id });
-            }
-          } catch (e) {
-            console.error('Cloud sync failed, using local data:', e);
-            dispatch({ type: 'SET_CHARACTERS', payload: localCharacters });
-            if (localCharacters.length > 0) {
-              dispatch({ type: 'SET_ACTIVE_CHARACTER', payload: localCharacters[0].id });
-            }
-          }
-        } else {
-          dispatch({ type: 'SET_CHARACTERS', payload: localCharacters });
-          if (localCharacters.length > 0) {
-            dispatch({ type: 'SET_ACTIVE_CHARACTER', payload: localCharacters[0].id });
-          }
+        dispatch({ type: 'SET_CHARACTERS', payload: localCharacters });
+        if (localCharacters.length > 0) {
+          dispatch({ type: 'SET_ACTIVE_CHARACTER', payload: localCharacters[0].id });
         }
       } catch (e) {
         console.error('Failed to initialize:', e);
@@ -133,36 +110,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
     }
     init();
-  }, [user]);
+  }, []);
 
-  // Save characters whenever they change (with debounced cloud sync)
+  // Save characters to localStorage whenever they change
   useEffect(() => {
     if (!state.isLoading) {
       saveCharacters(state.characters);
-
-      // Debounced cloud sync when logged in
-      if (user && syncTimeoutRef.current) {
-        clearTimeout(syncTimeoutRef.current);
-      }
-      if (user) {
-        syncTimeoutRef.current = setTimeout(async () => {
-          try {
-            for (const char of state.characters) {
-              await saveCharacterToCloud(user.id, char);
-            }
-          } catch (e) {
-            console.error('Failed to sync to cloud:', e);
-          }
-        }, 2000); // Debounce for 2 seconds
-      }
     }
-
-    return () => {
-      if (syncTimeoutRef.current) {
-        clearTimeout(syncTimeoutRef.current);
-      }
-    };
-  }, [state.characters, state.isLoading, user]);
+  }, [state.characters, state.isLoading]);
 
   const activeCharacter = state.characters.find(c => c.id === state.activeCharacterId) || null;
 
@@ -181,10 +136,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     },
     deleteCharacter: (id) => {
       dispatch({ type: 'DELETE_CHARACTER', payload: id });
-      // Also delete from cloud if logged in
-      if (user) {
-        deleteCharacterFromCloud(id).catch(e => console.error('Failed to delete from cloud:', e));
-      }
     },
     toggleSlot: (classId, spellLevel, slotIndex) => {
       if (activeCharacter) {
