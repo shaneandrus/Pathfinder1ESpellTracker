@@ -13,9 +13,7 @@ function fmtMod(mod: number): string {
   return mod >= 0 ? `+${mod}` : `${mod}`;
 }
 
-const RING_LABELS = ['Ring 1','Ring 2','Ring 3','Ring 4','Ring 5','Ring 6','Ring 7','Ring 8','Ring 9','Ring 10'];
-
-const BODY_SLOTS: { slot: ItemSlot; label: string; icon: string; ringIndex?: number }[] = [
+const BODY_SLOTS: { slot: ItemSlot; label: string; icon: string }[] = [
   { slot: 'head', label: 'Head', icon: 'fa-solid fa-hat-wizard' },
   { slot: 'neck', label: 'Neck', icon: 'fa-solid fa-gem' },
   { slot: 'shoulders', label: 'Shoulders', icon: 'fa-solid fa-vest' },
@@ -24,7 +22,7 @@ const BODY_SLOTS: { slot: ItemSlot; label: string; icon: string; ringIndex?: num
   { slot: 'belt', label: 'Belt', icon: 'fa-solid fa-circle' },
   { slot: 'wrists', label: 'Wrists', icon: 'fa-solid fa-hands' },
   { slot: 'hands', label: 'Gloves', icon: 'fa-solid fa-hand' },
-  ...RING_LABELS.map((label, i) => ({ slot: 'ring' as ItemSlot, label, icon: 'fa-solid fa-ring', ringIndex: i })),
+  { slot: 'ring', label: 'Ring', icon: 'fa-solid fa-ring' },
   { slot: 'feet', label: 'Feet', icon: 'fa-solid fa-shoe-prints' },
   { slot: 'main-hand', label: 'Main Hand', icon: 'fa-solid fa-sword' },
   { slot: 'off-hand', label: 'Off Hand', icon: 'fa-solid fa-shield' },
@@ -141,6 +139,7 @@ export default function InventoryView() {
   const [showStatsModal, setShowStatsModal] = useState(false);
   const [notesTarget, setNotesTarget] = useState<CharacterInventoryItem | null>(null);
   const [slotToast, setSlotToast] = useState<string | null>(null);
+  const [ringPage, setRingPage] = useState(0); // 0-9, which finger is shown in the ring slot
 
   const allItems = useMemo(() => getAllItems(), []);
   const bonusConflicts = useMemo(
@@ -335,32 +334,57 @@ export default function InventoryView() {
       <div style={{ margin: '0 16px 6px' }}>
         <h2 style={{ fontFamily: 'Cinzel, serif', fontSize: '0.65rem', color: '#3d5070', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: 10 }}>Equipment Slots</h2>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
-          {BODY_SLOTS.map(({ slot, label, icon, ringIndex }) => {
+          {BODY_SLOTS.map(({ slot, label, icon }) => {
             const allInSlot = inventory.filter(e => e.equipped && resolveItem(e)?.slot === slot);
-            const equipped = ringIndex !== undefined ? allInSlot[ringIndex] : allInSlot[0];
+            const isRing = slot === 'ring';
+            const equipped = isRing ? allInSlot[ringPage] : allInSlot[0];
+            const ringLabel = isRing ? `Ring ${ringPage + 1}` : label;
             return (
               <div
-                key={ringIndex !== undefined ? `ring-${ringIndex}` : slot}
-                onClick={() => { if (equipped) handleToggleEquipped(equipped.id); }}
+                key={slot}
                 style={{
                   background: equipped ? 'linear-gradient(135deg, #111828, #1a2535)' : '#0a0f1a',
                   border: `1px solid ${equipped ? '#c8962e44' : '#1a2535'}`,
                   borderRadius: 8,
                   padding: '8px 6px',
-                  cursor: equipped ? 'pointer' : 'default',
                   textAlign: 'center',
                   transition: 'border-color 0.2s',
+                  position: 'relative',
                 }}
               >
-                <div style={{ fontSize: '0.7rem', color: equipped ? '#c8962e' : '#253249', marginBottom: 3 }}>
-                  <i className={icon} />
-                </div>
-                <div style={{ fontFamily: 'Cinzel, serif', fontSize: '0.55rem', color: '#3d5070', letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 2 }}>{label}</div>
-                {equipped ? (
-                  <div style={{ fontSize: '0.6rem', color: '#a0b8cc', lineHeight: 1.2 }}>{displayName(equipped)}</div>
-                ) : (
-                  <div style={{ fontSize: '0.55rem', color: '#1a2535' }}>— empty —</div>
+                {isRing && (
+                  <>
+                    <button
+                      onClick={e => { e.stopPropagation(); setRingPage(p => (p + 9) % 10); }}
+                      style={{ position: 'absolute', left: 2, top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 'none', color: '#3d5070', cursor: 'pointer', fontSize: '0.6rem', padding: '2px 3px', lineHeight: 1 }}
+                    >‹</button>
+                    <button
+                      onClick={e => { e.stopPropagation(); setRingPage(p => (p + 1) % 10); }}
+                      style={{ position: 'absolute', right: 2, top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 'none', color: '#3d5070', cursor: 'pointer', fontSize: '0.6rem', padding: '2px 3px', lineHeight: 1 }}
+                    >›</button>
+                  </>
                 )}
+                <div
+                  onClick={() => { if (equipped) handleToggleEquipped(equipped.id); }}
+                  style={{ cursor: equipped ? 'pointer' : 'default' }}
+                >
+                  <div style={{ fontSize: '0.7rem', color: equipped ? '#c8962e' : '#253249', marginBottom: 3 }}>
+                    <i className={icon} />
+                  </div>
+                  <div style={{ fontFamily: 'Cinzel, serif', fontSize: '0.55rem', color: '#3d5070', letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 2 }}>{ringLabel}</div>
+                  {equipped ? (
+                    <div style={{ fontSize: '0.6rem', color: '#a0b8cc', lineHeight: 1.2 }}>{displayName(equipped)}</div>
+                  ) : (
+                    <div style={{ fontSize: '0.55rem', color: '#1a2535' }}>— empty —</div>
+                  )}
+                  {isRing && (
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: 2, marginTop: 4 }}>
+                      {Array.from({ length: 10 }, (_, i) => (
+                        <div key={i} style={{ width: 4, height: 4, borderRadius: '50%', background: i === ringPage ? '#c8962e' : allInSlot[i] ? '#5a4a20' : '#1a2535', transition: 'background 0.2s' }} />
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             );
           })}
