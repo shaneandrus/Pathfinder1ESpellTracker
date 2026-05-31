@@ -13,7 +13,9 @@ function fmtMod(mod: number): string {
   return mod >= 0 ? `+${mod}` : `${mod}`;
 }
 
-const BODY_SLOTS: { slot: ItemSlot; label: string; icon: string }[] = [
+const RING_LABELS = ['Ring 1','Ring 2','Ring 3','Ring 4','Ring 5','Ring 6','Ring 7','Ring 8','Ring 9','Ring 10'];
+
+const BODY_SLOTS: { slot: ItemSlot; label: string; icon: string; ringIndex?: number }[] = [
   { slot: 'head', label: 'Head', icon: 'fa-solid fa-hat-wizard' },
   { slot: 'neck', label: 'Neck', icon: 'fa-solid fa-gem' },
   { slot: 'shoulders', label: 'Shoulders', icon: 'fa-solid fa-vest' },
@@ -22,7 +24,7 @@ const BODY_SLOTS: { slot: ItemSlot; label: string; icon: string }[] = [
   { slot: 'belt', label: 'Belt', icon: 'fa-solid fa-circle' },
   { slot: 'wrists', label: 'Wrists', icon: 'fa-solid fa-hands' },
   { slot: 'hands', label: 'Gloves', icon: 'fa-solid fa-hand' },
-  { slot: 'ring', label: 'Ring', icon: 'fa-solid fa-ring' },
+  ...RING_LABELS.map((label, i) => ({ slot: 'ring' as ItemSlot, label, icon: 'fa-solid fa-ring', ringIndex: i })),
   { slot: 'feet', label: 'Feet', icon: 'fa-solid fa-shoe-prints' },
   { slot: 'main-hand', label: 'Main Hand', icon: 'fa-solid fa-sword' },
   { slot: 'off-hand', label: 'Off Hand', icon: 'fa-solid fa-shield' },
@@ -333,11 +335,12 @@ export default function InventoryView() {
       <div style={{ margin: '0 16px 6px' }}>
         <h2 style={{ fontFamily: 'Cinzel, serif', fontSize: '0.65rem', color: '#3d5070', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: 10 }}>Equipment Slots</h2>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
-          {BODY_SLOTS.map(({ slot, label, icon }) => {
-            const equipped = inventory.find(e => e.equipped && (resolveItem(e)?.slot === slot));
+          {BODY_SLOTS.map(({ slot, label, icon, ringIndex }) => {
+            const allInSlot = inventory.filter(e => e.equipped && resolveItem(e)?.slot === slot);
+            const equipped = ringIndex !== undefined ? allInSlot[ringIndex] : allInSlot[0];
             return (
               <div
-                key={slot}
+                key={ringIndex !== undefined ? `ring-${ringIndex}` : slot}
                 onClick={() => { if (equipped) handleToggleEquipped(equipped.id); }}
                 style={{
                   background: equipped ? 'linear-gradient(135deg, #111828, #1a2535)' : '#0a0f1a',

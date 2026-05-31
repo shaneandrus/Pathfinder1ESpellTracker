@@ -336,7 +336,7 @@ export function toggleEquipped(
 
   if (isEquipping && slot && slot !== 'none') {
     // Ring allows 2 simultaneously, all other slots allow 1
-    const maxPerSlot = slot === 'ring' ? 2 : 1;
+    const maxPerSlot = slot === 'ring' ? 10 : 1;
     const occupants = inventory.filter(
       e => e.id !== entryId && e.equipped && allItems.find(i => i.id === e.itemId)?.slot === slot
     );
