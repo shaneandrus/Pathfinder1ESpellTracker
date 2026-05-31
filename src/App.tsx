@@ -7,6 +7,8 @@ import { AddSpellView } from './views/AddSpellView';
 import { ManageClassesView } from './views/ManageClassesView';
 import { SettingsView } from './views/SettingsView';
 import { DiceRollerView } from './views/DiceRollerView';
+import InventoryView from './views/InventoryView';
+import AddItemView from './views/AddItemView';
 
 function AppContent() {
   const { state, setView, activeCharacter } = useApp();
@@ -53,6 +55,8 @@ function AppContent() {
       case 'manage':     return <ManageClassesView />;
       case 'settings':   return <SettingsView />;
       case 'dice':       return <DiceRollerView />;
+      case 'inventory':  return <InventoryView />;
+      case 'addItem':    return <AddItemView />;
       default:           return <CharacterListView />;
     }
   };
@@ -137,13 +141,17 @@ function AppContent() {
             boxShadow: '0 -1px 0 rgba(200,150,46,0.08), 0 -4px 20px rgba(0,0,0,0.4)',
           }}
         >
-          <div className="max-w-4xl mx-auto flex">
-            <NavButton active={state.currentView === 'slots'}     onClick={() => setView('slots')}      icon="fa-solid fa-bolt"      label="Slots" />
-            <NavButton active={state.currentView === 'spellbook'} onClick={() => setView('spellbook')}  icon="fa-solid fa-book-open" label="Spellbook" />
+          <div
+            className="max-w-4xl mx-auto"
+            style={{ display: 'flex', overflowX: 'auto', scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
+          >
+            <NavButton active={state.currentView === 'slots'}     onClick={() => setView('slots')}      icon="fa-solid fa-bolt"           label="Slots" />
+            <NavButton active={state.currentView === 'spellbook'} onClick={() => setView('spellbook')}  icon="fa-solid fa-book-open"      label="Spells" />
             <NavButton active={state.currentView === 'spells' || state.currentView === 'addSpell'} onClick={() => setView('spells')} icon="fa-solid fa-scroll" label="Known" />
-            <NavButton active={state.currentView === 'manage'}     onClick={() => setView('manage')}     icon="fa-solid fa-hat-wizard" label="Classes" />
-            <NavButton active={state.currentView === 'dice'}       onClick={() => setView('dice')}       icon="fa-solid fa-dice-d20"  label="Dice" />
-            <NavButton active={state.currentView === 'characters'} onClick={() => setView('characters')} icon="fa-solid fa-users"     label="Chars" />
+            <NavButton active={state.currentView === 'inventory' || state.currentView === 'addItem'} onClick={() => setView('inventory')} icon="fa-solid fa-bag-shopping" label="Items" />
+            <NavButton active={state.currentView === 'manage'}    onClick={() => setView('manage')}      icon="fa-solid fa-hat-wizard"     label="Classes" />
+            <NavButton active={state.currentView === 'dice'}      onClick={() => setView('dice')}        icon="fa-solid fa-dice-d20"       label="Dice" />
+            <NavButton active={state.currentView === 'characters'} onClick={() => setView('characters')} icon="fa-solid fa-users"         label="Chars" />
           </div>
         </nav>
       )}
@@ -162,8 +170,8 @@ function NavButton({ active, onClick, icon, label }: NavButtonProps) {
   return (
     <button
       onClick={onClick}
-      className="flex-1 py-3 flex flex-col items-center gap-0.5 transition-colors touch-manipulation"
-      style={{ background: 'none', border: 'none', cursor: 'pointer', position: 'relative' }}
+      className="py-3 flex flex-col items-center gap-0.5 transition-colors touch-manipulation"
+      style={{ background: 'none', border: 'none', cursor: 'pointer', position: 'relative', flex: '0 0 auto', minWidth: 60 }}
     >
       {active && (
         <span

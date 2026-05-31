@@ -1,4 +1,6 @@
-import type { Character, CharacterClass, ClassSpellSlots, KnownSpell, SpellSlotState } from '../types';
+import type { Character, CharacterClass, ClassSpellSlots, KnownSpell, SpellSlotState, CharacterInventoryItem, CharacterStats, EffectiveStats, Item, StatKey, BonusType } from '../types';
+import { DEFAULT_CHARACTER_STATS } from '../types'; // value import — not a type
+import { getAllItems } from '../data/items';
 import { getClassById } from '../data/classes';
 import { getSpellSlots as getHomebrewSpellSlots } from './settingsStore';
 
@@ -294,6 +296,175 @@ export function calculateSpellDC(
   spellLevel: number
 ): number {
   return 10 + spellLevel + abilityModifier;
+}
+
+// ── INVENTORY ────────────────────────────────────────────────────────────────
+
+export function addInventoryItem(
+  character: Character,
+  item: CharacterInventoryItem
+): Character {
+  return {
+    ...character,
+    inventory: [...(character.inventory ?? []), item],
+    updatedAt: Date.now(),
+  };
+}
+
+export function removeInventoryItem(character: Character, entryId: string): Character {
+  return {
+    ...character,
+    inventory: (character.inventory ?? []).filter(i => i.id !== entryId),
+    updatedAt: Date.now(),
+  };
+}
+
+export function toggleEquipped(character: Character, entryId: string): Character {
+  return {
+    ...character,
+    inventory: (character.inventory ?? []).map(i =>
+      i.id === entryId ? { ...i, equipped: !i.equipped } : i
+    ),
+    updatedAt: Date.now(),
+  };
+}
+
+export function updateInventoryItemQuantity(
+  character: Character,
+  entryId: string,
+  qty: number
+): Character {
+  return {
+    ...character,
+    inventory: (character.inventory ?? []).map(i =>
+      i.id === entryId ? { ...i, quantity: Math.max(1, qty) } : i
+    ),
+    updatedAt: Date.now(),
+  };
+}
+
+export function updateInventoryItemNotes(
+  character: Character,
+  entryId: string,
+  notes: string
+): Character {
+  return {
+    ...character,
+    inventory: (character.inventory ?? []).map(i =>
+      i.id === entryId ? { ...i, notes } : i
+    ),
+    updatedAt: Date.now(),
+  };
+}
+
+export function updateCharacterStats(
+  character: Character,
+  stats: CharacterStats
+): Character {
+  return { ...character, stats, updatedAt: Date.now() };
+}
+
+export function updateCharacterHP(
+  character: Character,
+  currentHP: number
+): Character {
+  const stats = character.stats ?? { ...DEFAULT_CHARACTER_STATS };
+  return {
+    ...character,
+    stats: { ...stats, currentHP: Math.max(0, Math.min(currentHP, stats.maxHP)) },
+    updatedAt: Date.now(),
+  };
+}
+
+export function addCustomItem(character: Character, item: Item): Character {
+  return {
+    ...character,
+    customItems: [...(character.customItems ?? []), item],
+    updatedAt: Date.now(),
+  };
+}
+
+export function removeCustomItem(character: Character, itemId: string): Character {
+  return {
+    ...character,
+    customItems: (character.customItems ?? []).filter(i => i.id !== itemId),
+    inventory: (character.inventory ?? []).filter(i => i.itemId !== itemId),
+    updatedAt: Date.now(),
+  };
+}
+
+const STACKABLE_BONUS_TYPES: BonusType[] = ['dodge', 'untyped'];
+
+export function computeEffectiveStats(
+  character: Character,
+  extraItems?: Item[]
+): EffectiveStats {
+  const base: CharacterStats = character.stats ?? { ...DEFAULT_CHARACTER_STATS };
+  const allItems = [...getAllItems(), ...(character.customItems ?? []), ...(extraItems ?? [])];
+
+  // Collect bonuses from equipped inventory entries
+  const equippedBonuses: { stat: StatKey; value: number; type: BonusType }[] = [];
+  for (const entry of character.inventory ?? []) {
+    if (!entry.equipped) continue;
+    const itemDef = allItems.find(i => i.id === entry.itemId);
+    const bonuses = entry.customBonuses ?? itemDef?.bonuses ?? [];
+    equippedBonuses.push(...bonuses);
+  }
+
+  // Compute effective value per stat respecting stacking rules
+  const statKeys: StatKey[] = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA', 'FORT', 'REF', 'WILL', 'INIT', 'SPEED', 'BAB'];
+  const acBonusByType: Partial<Record<BonusType, number>> = {};
+  const statTotals: Partial<Record<StatKey, number>> = {};
+
+  for (const stat of statKeys) {
+    const relevant = equippedBonuses.filter(b => b.stat === stat);
+    let total = 0;
+    const seenTypes = new Map<BonusType, number>();
+    for (const b of relevant) {
+      if (STACKABLE_BONUS_TYPES.includes(b.type)) {
+        total += b.value;
+      } else {
+        const prev = seenTypes.get(b.type) ?? 0;
+        if (b.value > prev) seenTypes.set(b.type, b.value);
+      }
+    }
+    for (const v of seenTypes.values()) total += v;
+    statTotals[stat] = total;
+  }
+
+  // AC-specific bonuses
+  for (const b of equippedBonuses.filter(b => b.stat === 'AC')) {
+    if (STACKABLE_BONUS_TYPES.includes(b.type)) {
+      acBonusByType[b.type] = (acBonusByType[b.type] ?? 0) + b.value;
+    } else {
+      const prev = acBonusByType[b.type] ?? 0;
+      if (b.value > prev) acBonusByType[b.type] = b.value;
+    }
+  }
+
+  const dexMod = Math.floor(((base.DEX + (statTotals['DEX'] ?? 0)) - 10) / 2);
+  const effectiveAC = 10 + dexMod + Object.values(acBonusByType).reduce((a, v) => a + v, 0);
+
+  // Build bonusByType index (for display purposes)
+  const bonusByType: EffectiveStats['bonusByType'] = {};
+
+  return {
+    STR: base.STR + (statTotals['STR'] ?? 0),
+    DEX: base.DEX + (statTotals['DEX'] ?? 0),
+    CON: base.CON + (statTotals['CON'] ?? 0),
+    INT: base.INT + (statTotals['INT'] ?? 0),
+    WIS: base.WIS + (statTotals['WIS'] ?? 0),
+    CHA: base.CHA + (statTotals['CHA'] ?? 0),
+    maxHP: base.maxHP,
+    currentHP: base.currentHP,
+    baseFort: base.baseFort + (statTotals['FORT'] ?? 0),
+    baseRef: base.baseRef + (statTotals['REF'] ?? 0),
+    baseWill: base.baseWill + (statTotals['WILL'] ?? 0),
+    bab: base.bab + (statTotals['BAB'] ?? 0),
+    speed: base.speed + (statTotals['SPEED'] ?? 0),
+    effectiveAC,
+    bonusByType,
+  };
 }
 
 // Recalculate spell slots for a character (e.g., after homebrew settings change)

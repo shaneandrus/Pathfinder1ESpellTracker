@@ -1,7 +1,7 @@
 import { createContext, useContext, useReducer, useEffect, type ReactNode } from 'react';
-import type { Character, Spell, CharacterClass, SpellSlotOverride } from '../types';
+import type { Character, Spell, CharacterClass, SpellSlotOverride, CharacterInventoryItem, CharacterStats, Item } from '../types';
 import { DEFAULT_HOMEBREW_SETTINGS } from '../types';
-import { loadCharacters, saveCharacters, createCharacter, toggleSpellSlot, resetSpellSlots, addKnownSpell, removeKnownSpell, updateCharacterClasses, toggleSpellPrepared, clearPreparedSpells, recalculateCharacterSpellSlots } from '../store/characterStore';
+import { loadCharacters, saveCharacters, createCharacter, toggleSpellSlot, resetSpellSlots, addKnownSpell, removeKnownSpell, updateCharacterClasses, toggleSpellPrepared, clearPreparedSpells, recalculateCharacterSpellSlots, addInventoryItem, removeInventoryItem, toggleEquipped, updateInventoryItemQuantity, updateInventoryItemNotes, updateCharacterStats, updateCharacterHP, addCustomItem, removeCustomItem } from '../store/characterStore';
 import { loadSpells } from '../data/spells';
 import { setSpellSlotOverride, removeSpellSlotOverride, clearClassOverrides } from '../store/settingsStore';
 
@@ -10,7 +10,7 @@ interface AppState {
   activeCharacterId: string | null;
   spells: Spell[];
   isLoading: boolean;
-  currentView: 'characters' | 'slots' | 'spells' | 'spellbook' | 'manage' | 'addSpell' | 'settings' | 'dice';
+  currentView: 'characters' | 'slots' | 'spells' | 'spellbook' | 'manage' | 'addSpell' | 'settings' | 'dice' | 'inventory' | 'addItem';
 }
 
 type Action =
@@ -83,6 +83,16 @@ interface AppContextValue {
   clearClassSpellSlotOverrides: (classId: string) => void;
   // Source filtering methods
   setAllowedSources: (sources: string[]) => void;
+  // Inventory methods
+  addItem: (item: CharacterInventoryItem) => void;
+  removeItem: (entryId: string) => void;
+  toggleItemEquipped: (entryId: string) => void;
+  updateItemQuantity: (entryId: string, qty: number) => void;
+  updateItemNotes: (entryId: string, notes: string) => void;
+  updateStats: (stats: CharacterStats) => void;
+  updateHP: (currentHP: number) => void;
+  addCustomItemToCharacter: (item: Item) => void;
+  removeCustomItemFromCharacter: (itemId: string) => void;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -217,6 +227,33 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const updated = { ...activeCharacter, homebrewSettings: newSettings, updatedAt: Date.now() };
         dispatch({ type: 'UPDATE_CHARACTER', payload: updated });
       }
+    },
+    addItem: (item) => {
+      if (activeCharacter) dispatch({ type: 'UPDATE_CHARACTER', payload: addInventoryItem(activeCharacter, item) });
+    },
+    removeItem: (entryId) => {
+      if (activeCharacter) dispatch({ type: 'UPDATE_CHARACTER', payload: removeInventoryItem(activeCharacter, entryId) });
+    },
+    toggleItemEquipped: (entryId) => {
+      if (activeCharacter) dispatch({ type: 'UPDATE_CHARACTER', payload: toggleEquipped(activeCharacter, entryId) });
+    },
+    updateItemQuantity: (entryId, qty) => {
+      if (activeCharacter) dispatch({ type: 'UPDATE_CHARACTER', payload: updateInventoryItemQuantity(activeCharacter, entryId, qty) });
+    },
+    updateItemNotes: (entryId, notes) => {
+      if (activeCharacter) dispatch({ type: 'UPDATE_CHARACTER', payload: updateInventoryItemNotes(activeCharacter, entryId, notes) });
+    },
+    updateStats: (stats) => {
+      if (activeCharacter) dispatch({ type: 'UPDATE_CHARACTER', payload: updateCharacterStats(activeCharacter, stats) });
+    },
+    updateHP: (currentHP) => {
+      if (activeCharacter) dispatch({ type: 'UPDATE_CHARACTER', payload: updateCharacterHP(activeCharacter, currentHP) });
+    },
+    addCustomItemToCharacter: (item) => {
+      if (activeCharacter) dispatch({ type: 'UPDATE_CHARACTER', payload: addCustomItem(activeCharacter, item) });
+    },
+    removeCustomItemFromCharacter: (itemId) => {
+      if (activeCharacter) dispatch({ type: 'UPDATE_CHARACTER', payload: removeCustomItem(activeCharacter, itemId) });
     },
   };
 
