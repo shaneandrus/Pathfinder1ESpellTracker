@@ -2,8 +2,8 @@ import { useState, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
 import { computeEffectiveStats } from '../store/characterStore';
 import { getAllItems } from '../data/items';
-import type { CharacterStats, ItemSlot, CharacterInventoryItem } from '../types';
-import { DEFAULT_CHARACTER_STATS } from '../types';
+import type { CharacterStats, ItemSlot, CharacterInventoryItem, CharacterCurrency } from '../types';
+import { DEFAULT_CHARACTER_STATS, DEFAULT_CURRENCY } from '../types';
 
 function statMod(score: number): number {
   return Math.floor((score - 10) / 2);
@@ -135,7 +135,7 @@ function NotesModal({ item, itemName, onSave, onClose }: NotesModalProps) {
 }
 
 export default function InventoryView() {
-  const { activeCharacter, setView, toggleItemEquipped, removeItem, updateItemQuantity, updateItemNotes, updateStats } = useApp();
+  const { activeCharacter, setView, toggleItemEquipped, removeItem, updateItemQuantity, updateItemNotes, updateStats, updateCurrency } = useApp();
   const [showStatsModal, setShowStatsModal] = useState(false);
   const [notesTarget, setNotesTarget] = useState<CharacterInventoryItem | null>(null);
 
@@ -145,6 +145,19 @@ export default function InventoryView() {
 
   const baseStats = activeCharacter.stats ?? DEFAULT_CHARACTER_STATS;
   const effective = computeEffectiveStats(activeCharacter);
+  const currency = activeCharacter.currency ?? DEFAULT_CURRENCY;
+
+  function setCoin(field: keyof CharacterCurrency, raw: string) {
+    const val = Math.max(0, parseInt(raw) || 0);
+    updateCurrency({ ...currency, [field]: val });
+  }
+
+  function adjustCoin(field: keyof CharacterCurrency, delta: number) {
+    const val = Math.max(0, (currency[field] ?? 0) + delta);
+    updateCurrency({ ...currency, [field]: val });
+  }
+
+  const totalGP = currency.pp * 10 + currency.gp + currency.sp / 10 + currency.cp / 100;
   const inventory = activeCharacter.inventory ?? [];
   const totalWeight = inventory.reduce((acc, entry) => {
     const def = allItems.find(i => i.id === entry.itemId) ?? activeCharacter.customItems?.find(i => i.id === entry.itemId);
@@ -248,6 +261,45 @@ export default function InventoryView() {
           {statChip('Will', fmtMod(effective.baseWill + statMod(effective.WIS)))}
           {statChip('BAB', `+${effective.bab}`)}
           {statChip('Speed', `${effective.speed}ft`)}
+        </div>
+      </div>
+
+      {/* Divider */}
+      <div style={{ margin: '18px 16px', height: 1, background: 'linear-gradient(90deg, transparent, #253249, transparent)' }} />
+
+      {/* ── CURRENCY ── */}
+      <div style={{ margin: '0 16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+          <h2 style={{ fontFamily: 'Cinzel, serif', fontSize: '0.65rem', color: '#3d5070', letterSpacing: '0.15em', textTransform: 'uppercase', margin: 0 }}>Currency</h2>
+          <span style={{ fontSize: '0.65rem', color: '#5a7a8a' }}>{totalGP.toFixed(2)} gp total</span>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+          {([
+            { key: 'pp', label: 'Platinum', color: '#a8c8e8', bg: '#0d1a2a', border: '#2a4a6a' },
+            { key: 'gp', label: 'Gold',     color: '#e0c060', bg: '#1a1408', border: '#5a4010' },
+            { key: 'sp', label: 'Silver',   color: '#c0c8d0', bg: '#121618', border: '#3a4448' },
+            { key: 'cp', label: 'Copper',   color: '#c08050', bg: '#1a1008', border: '#5a3010' },
+          ] as const).map(({ key, label, color, bg, border }) => (
+            <div key={key} style={{ background: bg, border: `1px solid ${border}`, borderRadius: 8, padding: '8px 6px', textAlign: 'center' }}>
+              <div style={{ fontFamily: 'Cinzel, serif', fontSize: '0.55rem', color, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 5 }}>{label}</div>
+              <input
+                type="number"
+                min="0"
+                value={currency[key]}
+                onChange={e => setCoin(key, e.target.value)}
+                style={{
+                  width: '100%', boxSizing: 'border-box', textAlign: 'center',
+                  background: 'transparent', border: 'none', outline: 'none',
+                  color, fontFamily: 'Cinzel, serif', fontSize: '1.1rem', fontWeight: 700,
+                  MozAppearance: 'textfield',
+                }}
+              />
+              <div style={{ display: 'flex', gap: 4, justifyContent: 'center', marginTop: 5 }}>
+                <button onClick={() => adjustCoin(key, -1)} style={{ flex: 1, background: 'transparent', border: `1px solid ${border}`, borderRadius: 3, color, cursor: 'pointer', fontSize: '0.7rem', padding: '1px 0' }}>−</button>
+                <button onClick={() => adjustCoin(key, 1)}  style={{ flex: 1, background: 'transparent', border: `1px solid ${border}`, borderRadius: 3, color, cursor: 'pointer', fontSize: '0.7rem', padding: '1px 0' }}>+</button>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 

@@ -132,6 +132,15 @@ export interface EffectiveStats extends CharacterStats {
   bonusByType: Partial<Record<BonusType, Partial<Record<StatKey, number>>>>;
 }
 
+export interface CharacterCurrency {
+  pp: number;
+  gp: number;
+  sp: number;
+  cp: number;
+}
+
+export const DEFAULT_CURRENCY: CharacterCurrency = { pp: 0, gp: 0, sp: 0, cp: 0 };
+
 export const DEFAULT_CHARACTER_STATS: CharacterStats = {
   STR: 10, DEX: 10, CON: 10, INT: 10, WIS: 10, CHA: 10,
   maxHP: 1, currentHP: 1,
@@ -147,6 +156,7 @@ export interface Character {
   knownSpells: KnownSpell[];
   homebrewSettings?: HomebrewSettings;
   stats?: CharacterStats;
+  currency?: CharacterCurrency;
   inventory?: CharacterInventoryItem[];
   customItems?: Item[];
   createdAt: number;

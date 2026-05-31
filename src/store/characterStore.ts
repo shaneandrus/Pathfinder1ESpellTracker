@@ -1,4 +1,4 @@
-import type { Character, CharacterClass, ClassSpellSlots, KnownSpell, SpellSlotState, CharacterInventoryItem, CharacterStats, EffectiveStats, Item, StatKey, BonusType } from '../types';
+import type { Character, CharacterClass, ClassSpellSlots, KnownSpell, SpellSlotState, CharacterInventoryItem, CharacterStats, EffectiveStats, Item, StatKey, BonusType, CharacterCurrency } from '../types';
 import { DEFAULT_CHARACTER_STATS } from '../types'; // value import — not a type
 import { getAllItems } from '../data/items';
 import { getClassById } from '../data/classes';
@@ -362,6 +362,13 @@ export function updateCharacterStats(
   stats: CharacterStats
 ): Character {
   return { ...character, stats, updatedAt: Date.now() };
+}
+
+export function updateCharacterCurrency(
+  character: Character,
+  currency: CharacterCurrency
+): Character {
+  return { ...character, currency, updatedAt: Date.now() };
 }
 
 export function updateCharacterHP(

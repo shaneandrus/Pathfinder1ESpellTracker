@@ -1,7 +1,7 @@
 import { createContext, useContext, useReducer, useEffect, type ReactNode } from 'react';
-import type { Character, Spell, CharacterClass, SpellSlotOverride, CharacterInventoryItem, CharacterStats, Item } from '../types';
+import type { Character, Spell, CharacterClass, SpellSlotOverride, CharacterInventoryItem, CharacterStats, Item, CharacterCurrency } from '../types';
 import { DEFAULT_HOMEBREW_SETTINGS } from '../types';
-import { loadCharacters, saveCharacters, createCharacter, toggleSpellSlot, resetSpellSlots, addKnownSpell, removeKnownSpell, updateCharacterClasses, toggleSpellPrepared, clearPreparedSpells, recalculateCharacterSpellSlots, addInventoryItem, removeInventoryItem, toggleEquipped, updateInventoryItemQuantity, updateInventoryItemNotes, updateCharacterStats, updateCharacterHP, addCustomItem, removeCustomItem } from '../store/characterStore';
+import { loadCharacters, saveCharacters, createCharacter, toggleSpellSlot, resetSpellSlots, addKnownSpell, removeKnownSpell, updateCharacterClasses, toggleSpellPrepared, clearPreparedSpells, recalculateCharacterSpellSlots, addInventoryItem, removeInventoryItem, toggleEquipped, updateInventoryItemQuantity, updateInventoryItemNotes, updateCharacterStats, updateCharacterHP, updateCharacterCurrency, addCustomItem, removeCustomItem } from '../store/characterStore';
 import { loadSpells } from '../data/spells';
 import { setSpellSlotOverride, removeSpellSlotOverride, clearClassOverrides } from '../store/settingsStore';
 
@@ -93,6 +93,7 @@ interface AppContextValue {
   updateHP: (currentHP: number) => void;
   addCustomItemToCharacter: (item: Item) => void;
   removeCustomItemFromCharacter: (itemId: string) => void;
+  updateCurrency: (currency: CharacterCurrency) => void;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -254,6 +255,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     },
     removeCustomItemFromCharacter: (itemId) => {
       if (activeCharacter) dispatch({ type: 'UPDATE_CHARACTER', payload: removeCustomItem(activeCharacter, itemId) });
+    },
+    updateCurrency: (currency) => {
+      if (activeCharacter) dispatch({ type: 'UPDATE_CHARACTER', payload: updateCharacterCurrency(activeCharacter, currency) });
     },
   };
 
