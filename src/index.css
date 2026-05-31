@@ -1,41 +1,181 @@
 @import "tailwindcss";
 
+@theme {
+  /* Deep navy-black palette replacing grays */
+  --color-gray-950: #03050c;
+  --color-gray-900: #07091a;
+  --color-gray-800: #0e1528;
+  --color-gray-700: #172035;
+  --color-gray-600: #253249;
+  --color-gray-500: #3d5070;
+  --color-gray-400: #7a93b3;
+  --color-gray-300: #a4b8cc;
+  --color-gray-200: #c8d5e2;
+  --color-gray-100: #e0d4b8;
+  --color-white: #f2e9d4;
+
+  /* Gold/amber replaces indigo as primary accent */
+  --color-indigo-950: #0a0805;
+  --color-indigo-900: #1a1305;
+  --color-indigo-800: #2a2008;
+  --color-indigo-700: #8a6018;
+  --color-indigo-600: #aa7820;
+  --color-indigo-500: #c8962e;
+  --color-indigo-400: #e0b04a;
+  --color-indigo-300: #f0cb7a;
+  --color-indigo-200: #f8e0aa;
+
+  /* Sage green for available slots */
+  --color-green-700: #2a5538;
+  --color-green-600: #3a7050;
+  --color-green-500: #4e8a65;
+  --color-green-400: #6aaa80;
+  --color-green-300: #8ecca0;
+
+  /* Ember red for danger */
+  --color-red-900: #180a08;
+  --color-red-800: #380e08;
+  --color-red-700: #6a1c12;
+  --color-red-600: #8a2a1c;
+  --color-red-500: #aa3c2c;
+  --color-red-400: #cc5a48;
+
+  /* Arcane lavender for spell levels */
+  --color-purple-800: #241040;
+  --color-purple-700: #402068;
+  --color-purple-600: #5c3088;
+  --color-purple-500: #7c50a8;
+  --color-purple-400: #a878cc;
+  --color-purple-300: #c8a0e8;
+
+  /* Yellow for nat 20 / warnings */
+  --color-yellow-900: #1a1205;
+  --color-yellow-400: #d4a840;
+
+  /* Teal for bard/shaman */
+  --color-teal-500: #3a8878;
+  --color-teal-400: #58aa98;
+
+  /* Typography */
+  --font-sans: 'Crimson Pro', Georgia, 'Times New Roman', serif;
+  --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+}
+
 @layer base {
   body {
     @apply bg-gray-900 text-gray-100 min-h-screen;
+    font-family: 'Crimson Pro', Georgia, serif;
+    font-size: 17px;
+    line-height: 1.5;
+    background-image:
+      radial-gradient(ellipse at 12% 0%, rgba(200, 150, 46, 0.07) 0%, transparent 50%),
+      radial-gradient(ellipse at 88% 100%, rgba(92, 48, 136, 0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 50%, rgba(14, 21, 40, 0.6) 0%, transparent 80%),
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 79px,
+        rgba(37, 50, 73, 0.18) 79px,
+        rgba(37, 50, 73, 0.18) 80px
+      ),
+      repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 79px,
+        rgba(37, 50, 73, 0.18) 79px,
+        rgba(37, 50, 73, 0.18) 80px
+      );
+    background-attachment: fixed;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: 'Cinzel', 'Times New Roman', serif;
+    letter-spacing: 0.03em;
+  }
+
+  input, select, textarea {
+    font-family: 'Crimson Pro', Georgia, serif;
+    font-size: 16px;
   }
 }
 
 @layer components {
   .btn {
-    @apply px-4 py-2 rounded-lg font-medium transition-colors duration-200 touch-manipulation;
+    @apply px-4 py-2 rounded font-medium transition-all duration-200 touch-manipulation;
+    font-family: 'Cinzel', serif;
+    font-size: 0.78rem;
+    letter-spacing: 0.06em;
     min-height: 44px;
     min-width: 44px;
   }
 
   .btn-primary {
-    @apply bg-indigo-600 hover:bg-indigo-700 text-white;
+    background: linear-gradient(135deg, #b87a20 0%, #9a6018 100%);
+    color: #f8e8c0;
+    border: 1px solid #d4a040;
+    box-shadow: 0 2px 8px rgba(184, 122, 32, 0.3), inset 0 1px 0 rgba(255, 220, 100, 0.15);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  }
+  .btn-primary:hover {
+    background: linear-gradient(135deg, #cc8c28 0%, #aa7020 100%);
+    box-shadow: 0 3px 12px rgba(184, 122, 32, 0.45), inset 0 1px 0 rgba(255, 220, 100, 0.2);
+    transform: translateY(-1px);
+  }
+  .btn-primary:active {
+    transform: translateY(0);
   }
 
   .btn-secondary {
-    @apply bg-gray-700 hover:bg-gray-600 text-white;
+    background: rgba(23, 32, 53, 0.8);
+    color: #a4b8cc;
+    border: 1px solid #253249;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+  }
+  .btn-secondary:hover {
+    background: rgba(37, 50, 73, 0.9);
+    color: #c8d5e2;
+    border-color: #3d5070;
   }
 
   .btn-danger {
-    @apply bg-red-600 hover:bg-red-700 text-white;
+    background: linear-gradient(135deg, #8a2a1c 0%, #6a1c12 100%);
+    color: #fdd8d0;
+    border: 1px solid #aa3c2c;
+    box-shadow: 0 2px 8px rgba(138, 42, 28, 0.3);
+  }
+  .btn-danger:hover {
+    background: linear-gradient(135deg, #aa3c2c 0%, #8a2a1c 100%);
+    box-shadow: 0 3px 12px rgba(138, 42, 28, 0.45);
   }
 
   .card {
-    @apply bg-gray-800 rounded-xl p-4 shadow-lg;
+    background: linear-gradient(145deg, rgba(20, 30, 50, 0.95) 0%, rgba(14, 21, 40, 0.9) 100%);
+    border: 1px solid #253249;
+    border-top-color: #2e3f5c;
+    @apply rounded-xl p-4 shadow-lg;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.04);
   }
 
   .input {
-    @apply w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent;
+    background: rgba(7, 9, 26, 0.8);
+    border: 1px solid #253249;
+    color: #e0d4b8;
+    @apply w-full px-3 py-2 rounded text-white placeholder-gray-500 focus:outline-none;
     min-height: 44px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .input:focus {
+    border-color: #aa7820;
+    box-shadow: 0 0 0 2px rgba(170, 120, 32, 0.25), 0 0 12px rgba(170, 120, 32, 0.1);
   }
 
   .label {
-    @apply block text-sm font-medium text-gray-300 mb-1;
+    @apply block text-sm font-medium mb-1;
+    font-family: 'Cinzel', serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    color: #7a93b3;
+    text-transform: uppercase;
   }
 
   .spell-slot {
@@ -43,16 +183,30 @@
   }
 
   .spell-slot-available {
-    @apply border-green-500 bg-green-500/20 hover:bg-green-500/40;
+    border-color: #c8962e;
+    background: rgba(200, 150, 46, 0.15);
+    box-shadow: 0 0 8px rgba(200, 150, 46, 0.25);
+  }
+  .spell-slot-available:hover {
+    background: rgba(200, 150, 46, 0.3);
+    box-shadow: 0 0 14px rgba(200, 150, 46, 0.45);
+    transform: scale(1.08);
   }
 
   .spell-slot-used {
-    @apply border-gray-600 bg-gray-700/50 hover:bg-gray-600/50;
+    border-color: #253249;
+    background: rgba(7, 9, 26, 0.6);
+  }
+  .spell-slot-used:hover {
+    border-color: #3d5070;
+    background: rgba(37, 50, 73, 0.4);
   }
 
   .die-face {
-    @apply w-16 h-16 rounded-xl border-2 flex items-center justify-center text-2xl font-black bg-gray-900 text-white;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    @apply w-16 h-16 rounded-xl border-2 flex items-center justify-center text-2xl bg-gray-900 text-white;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255,255,255,0.06);
   }
 
   .die-spin {
@@ -66,27 +220,55 @@
   .dice-rolling {
     animation: dice-shake 0.1s ease-in-out infinite;
   }
+
+  /* Page-load stagger for views */
+  .view-enter {
+    animation: view-rise 0.4s ease-out both;
+  }
+  .view-enter > * {
+    animation: view-rise 0.5s ease-out both;
+  }
+  .view-enter > *:nth-child(1) { animation-delay: 0.04s; }
+  .view-enter > *:nth-child(2) { animation-delay: 0.09s; }
+  .view-enter > *:nth-child(3) { animation-delay: 0.14s; }
+  .view-enter > *:nth-child(4) { animation-delay: 0.18s; }
+  .view-enter > *:nth-child(5) { animation-delay: 0.22s; }
 }
 
 @keyframes die-tumble {
-  0% { transform: rotate(0deg) scale(1); }
-  25% { transform: rotate(8deg) scale(1.05); }
-  50% { transform: rotate(-5deg) scale(0.98); }
-  75% { transform: rotate(6deg) scale(1.03); }
+  0%   { transform: rotate(0deg) scale(1); }
+  25%  { transform: rotate(8deg) scale(1.05); }
+  50%  { transform: rotate(-5deg) scale(0.98); }
+  75%  { transform: rotate(6deg) scale(1.03); }
   100% { transform: rotate(0deg) scale(1); }
 }
 
 @keyframes die-bounce {
-  0% { transform: scale(0.8) rotate(-10deg); opacity: 0.7; }
-  60% { transform: scale(1.15) rotate(3deg); opacity: 1; }
-  80% { transform: scale(0.97) rotate(-1deg); }
+  0%   { transform: scale(0.8) rotate(-10deg); opacity: 0.6; }
+  60%  { transform: scale(1.15) rotate(3deg); opacity: 1; }
+  80%  { transform: scale(0.97) rotate(-1deg); }
   100% { transform: scale(1) rotate(0deg); }
 }
 
 @keyframes dice-shake {
-  0% { transform: translateX(0); }
-  25% { transform: translateX(-2px); }
-  50% { transform: translateX(2px); }
-  75% { transform: translateX(-1px); }
+  0%   { transform: translateX(0); }
+  25%  { transform: translateX(-2px); }
+  50%  { transform: translateX(2px); }
+  75%  { transform: translateX(-1px); }
   100% { transform: translateX(0); }
+}
+
+@keyframes view-rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes rune-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.6; }
+  50%       { opacity: 1; }
 }

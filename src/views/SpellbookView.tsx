@@ -129,7 +129,7 @@ export function SpellbookView() {
           + Add Spells
         </button>
         <button onClick={() => setView('spells')} className="btn btn-secondary">
-          📋 Manage Known Spells
+          <i className="fa-solid fa-scroll mr-1" /> Manage Known Spells
         </button>
       </div>
       
@@ -217,7 +217,7 @@ export function SpellbookView() {
                             title="View on Archives of Nethys"
                             onClick={e => e.stopPropagation()}
                           >
-                            🔗
+                            <i className="fa-solid fa-arrow-up-right-from-square" />
                           </a>
                         </div>
                         

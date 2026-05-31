@@ -88,7 +88,7 @@ export function DiceRollerView() {
 
   return (
     <div className="p-4 max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold text-white mb-6">🎲 Dice Roller</h1>
+      <h1 className="text-2xl font-bold text-white mb-6"><i className="fa-solid fa-dice-d20 mr-2" />Dice Roller</h1>
 
       {/* Dice Type Selector */}
       <div className="flex flex-wrap gap-2 mb-6">
@@ -155,8 +155,8 @@ export function DiceRollerView() {
       >
         {currentDisplay ? (
           <>
-            {isNat20 && <div className="text-yellow-400 text-sm font-bold mb-2 animate-bounce">🎉 NATURAL 20! 🎉</div>}
-            {isNat1 && <div className="text-red-400 text-sm font-bold mb-2 animate-bounce">💀 NATURAL 1...</div>}
+            {isNat20 && <div className="text-yellow-400 text-sm font-bold mb-2 animate-bounce"><i className="fa-solid fa-trophy mr-1" />NATURAL 20!<i className="fa-solid fa-trophy ml-1" /></div>}
+            {isNat1 && <div className="text-red-400 text-sm font-bold mb-2 animate-bounce"><i className="fa-solid fa-skull mr-1" />NATURAL 1...</div>}
             <div className="flex flex-wrap justify-center gap-3 mb-4">
               {currentDisplay.map((val, i) => (
                 <div
@@ -198,7 +198,10 @@ export function DiceRollerView() {
             : 'bg-indigo-600 hover:bg-indigo-500 text-white active:scale-95 shadow-lg shadow-indigo-600/30'
         }`}
       >
-        {isRolling ? '🎲 Rolling...' : `🎲 Roll ${diceCount}${selectedDie.type}${modifier !== 0 ? (modifier > 0 ? `+${modifier}` : modifier) : ''}`}
+        {isRolling
+          ? <><i className="fa-solid fa-dice-d20 mr-2" />Rolling...</>
+          : <><i className="fa-solid fa-dice-d20 mr-2" />{`Roll ${diceCount}${selectedDie.type}${modifier !== 0 ? (modifier > 0 ? `+${modifier}` : modifier) : ''}`}</>
+        }
       </button>
 
       {/* Roll History */}

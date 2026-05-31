@@ -137,7 +137,7 @@ export function SpellSlotsView() {
       {/* Quick Actions */}
       <div className="flex gap-2 mb-6 flex-wrap">
         <button onClick={() => setView('spellbook')} className="btn btn-secondary text-sm">
-          📖 Spellbook
+          <i className="fa-solid fa-book-open mr-1" /> Spellbook
         </button>
         <button onClick={() => setView('manage')} className="btn btn-secondary text-sm">
           ⚙️ Manage Classes
@@ -153,7 +153,7 @@ export function SpellSlotsView() {
           </>
         ) : (
           <button onClick={() => setShowResetAllConfirm(true)} className="btn btn-secondary text-sm">
-            🔄 New Day (Reset All)
+            <i className="fa-solid fa-sun mr-1" /> New Day (Reset All)
           </button>
         )}
       </div>
@@ -216,7 +216,7 @@ export function SpellSlotsView() {
               <div className="card text-center py-6">
                 <p className="text-gray-400 mb-3">No spells prepared yet</p>
                 <button onClick={() => setView('spellbook')} className="btn btn-primary text-sm">
-                  📖 Open Spellbook to Prepare
+                  <i className="fa-solid fa-book-open mr-1" /> Open Spellbook to Prepare
                 </button>
               </div>
             ) : (
@@ -289,7 +289,7 @@ export function SpellSlotsView() {
                   onClick={() => setView('spellbook')}
                   className="btn btn-secondary text-sm w-full"
                 >
-                  📖 Change Prepared Spells
+                  <i className="fa-solid fa-book-open mr-1" /> Change Prepared Spells
                 </button>
               </div>
             )}
