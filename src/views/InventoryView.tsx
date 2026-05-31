@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
-import { computeEffectiveStats } from '../store/characterStore';
+import { computeEffectiveStats, getEquippedBonusConflicts, toggleEquipped as storeToggleEquipped } from '../store/characterStore';
 import { getAllItems } from '../data/items';
 import type { CharacterStats, ItemSlot, CharacterInventoryItem, CharacterCurrency } from '../types';
 import { DEFAULT_CHARACTER_STATS, DEFAULT_CURRENCY } from '../types';
@@ -138,8 +138,13 @@ export default function InventoryView() {
   const { activeCharacter, setView, toggleItemEquipped, removeItem, updateItemQuantity, updateItemNotes, updateStats, updateCurrency } = useApp();
   const [showStatsModal, setShowStatsModal] = useState(false);
   const [notesTarget, setNotesTarget] = useState<CharacterInventoryItem | null>(null);
+  const [slotToast, setSlotToast] = useState<string | null>(null);
 
   const allItems = useMemo(() => getAllItems(), []);
+  const bonusConflicts = useMemo(
+    () => activeCharacter ? getEquippedBonusConflicts(activeCharacter) : new Map<string, Set<number>>(),
+    [activeCharacter]
+  );
 
   if (!activeCharacter) return null;
 
@@ -158,6 +163,15 @@ export default function InventoryView() {
   }
 
   const totalGP = currency.pp * 10 + currency.gp + currency.sp / 10 + currency.cp / 100;
+
+  function handleToggleEquipped(entryId: string) {
+    const { displaced } = storeToggleEquipped(activeCharacter!, entryId);
+    toggleItemEquipped(entryId);
+    if (displaced) {
+      setSlotToast(`Slot taken — unequipped "${displaced}"`);
+      setTimeout(() => setSlotToast(null), 3000);
+    }
+  }
   const inventory = activeCharacter.inventory ?? [];
   const totalWeight = inventory.reduce((acc, entry) => {
     const def = allItems.find(i => i.id === entry.itemId) ?? activeCharacter.customItems?.find(i => i.id === entry.itemId);
@@ -206,8 +220,17 @@ export default function InventoryView() {
   const hpPercent = Math.max(0, Math.min(100, (baseStats.currentHP / Math.max(1, baseStats.maxHP)) * 100));
   const hpColor = hpPercent > 50 ? '#4a8a4a' : hpPercent > 25 ? '#c8962e' : '#c05050';
 
+  const totalConflicts = bonusConflicts.size;
+
   return (
     <div style={{ paddingBottom: 90, minHeight: '100vh', background: 'linear-gradient(180deg, #0a0f1a 0%, #0d1423 100%)' }}>
+      {/* Slot-swap toast */}
+      {slotToast && (
+        <div style={{ position: 'fixed', top: 60, left: '50%', transform: 'translateX(-50%)', zIndex: 60, background: '#1a1408', border: '1px solid #5a4010', borderRadius: 8, padding: '8px 16px', fontSize: '0.72rem', color: '#e0c060', fontFamily: 'Cinzel, serif', boxShadow: '0 4px 16px rgba(0,0,0,0.6)', whiteSpace: 'nowrap', animation: 'fadeSlideIn 0.2s ease' }}>
+          <i className="fa-solid fa-arrow-right-arrow-left" style={{ marginRight: 6 }} />{slotToast}
+        </div>
+      )}
+
       {/* Header */}
       <div style={{ padding: '16px 16px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <h1 style={{ fontFamily: 'Cinzel, serif', fontSize: '1rem', color: '#c8962e', letterSpacing: '0.15em', textTransform: 'uppercase', margin: 0 }}>
@@ -315,7 +338,7 @@ export default function InventoryView() {
             return (
               <div
                 key={slot}
-                onClick={() => { if (equipped) toggleItemEquipped(equipped.id); }}
+                onClick={() => { if (equipped) handleToggleEquipped(equipped.id); }}
                 style={{
                   background: equipped ? 'linear-gradient(135deg, #111828, #1a2535)' : '#0a0f1a',
                   border: `1px solid ${equipped ? '#c8962e44' : '#1a2535'}`,
@@ -354,6 +377,19 @@ export default function InventoryView() {
           <span style={{ fontSize: '0.65rem', color: '#3d5070' }}>{totalWeight.toFixed(1)} lbs</span>
         </div>
 
+        {/* Stacking conflict notice */}
+        {totalConflicts > 0 && (
+          <div style={{ background: '#1a1408', border: '1px solid #5a3a08', borderRadius: 8, padding: '8px 12px', marginBottom: 10, display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+            <i className="fa-solid fa-triangle-exclamation" style={{ color: '#c8962e', fontSize: '0.75rem', marginTop: 1, flexShrink: 0 }} />
+            <div>
+              <div style={{ fontFamily: 'Cinzel, serif', fontSize: '0.65rem', color: '#c8962e', marginBottom: 2 }}>Bonus Stacking Conflicts</div>
+              <div style={{ fontSize: '0.62rem', color: '#7a6030', lineHeight: 1.4 }}>
+                {totalConflicts} equipped item{totalConflicts !== 1 ? 's have' : ' has'} bonuses overridden by a higher bonus of the same type. Shadowed bonuses are shown with ⚠ and strikethrough. Only the highest bonus of each type applies (except dodge & untyped, which always stack).
+              </div>
+            </div>
+          </div>
+        )}
+
         {inventory.length === 0 && (
           <div style={{ textAlign: 'center', padding: '32px 0', color: '#253249', fontFamily: 'Cinzel, serif', fontSize: '0.75rem' }}>
             No items yet. Add some below.
@@ -391,16 +427,24 @@ export default function InventoryView() {
                       <div style={{ fontFamily: 'Cinzel, serif', fontSize: '0.8rem', color: '#c8d8e8', fontWeight: 600, marginBottom: 2 }}>{displayName(entry)}</div>
                       {def?.bonuses && def.bonuses.length > 0 && (
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 3 }}>
-                          {def.bonuses.map((b, bi) => (
-                            <span key={bi} style={{ fontSize: '0.6rem', background: '#0d1a28', border: '1px solid #253249', borderRadius: 10, padding: '1px 6px', color: '#c8962e' }}>
-                              {b.value > 0 ? '+' : ''}{b.value} {b.stat} ({b.type})
-                            </span>
-                          ))}
-                          {(entry.customBonuses ?? []).map((b, bi) => (
-                            <span key={`c${bi}`} style={{ fontSize: '0.6rem', background: '#1a0d28', border: '1px solid #3d2560', borderRadius: 10, padding: '1px 6px', color: '#9b6db5' }}>
-                              {b.value > 0 ? '+' : ''}{b.value} {b.stat} ({b.type})
-                            </span>
-                          ))}
+                          {def.bonuses.map((b, bi) => {
+                            const shadowed = entry.equipped && bonusConflicts.get(entry.id)?.has(bi);
+                            return (
+                              <span key={bi} title={shadowed ? `Shadowed: a higher ${b.type} bonus to ${b.stat} is already equipped` : undefined} style={{ fontSize: '0.6rem', background: shadowed ? '#1a1a1a' : '#0d1a28', border: `1px solid ${shadowed ? '#3d3020' : '#253249'}`, borderRadius: 10, padding: '1px 6px', color: shadowed ? '#5a4a30' : '#c8962e', textDecoration: shadowed ? 'line-through' : 'none', opacity: shadowed ? 0.6 : 1 }}>
+                                {shadowed && <span style={{ marginRight: 2, textDecoration: 'none', display: 'inline-block' }}>⚠</span>}
+                                {b.value > 0 ? '+' : ''}{b.value} {b.stat} ({b.type})
+                              </span>
+                            );
+                          })}
+                          {(entry.customBonuses ?? []).map((b, bi) => {
+                            const shadowed = entry.equipped && bonusConflicts.get(entry.id)?.has(bi);
+                            return (
+                              <span key={`c${bi}`} title={shadowed ? `Shadowed: a higher ${b.type} bonus to ${b.stat} is already equipped` : undefined} style={{ fontSize: '0.6rem', background: shadowed ? '#1a1020' : '#1a0d28', border: `1px solid ${shadowed ? '#3d2050' : '#3d2560'}`, borderRadius: 10, padding: '1px 6px', color: shadowed ? '#4a3060' : '#9b6db5', textDecoration: shadowed ? 'line-through' : 'none', opacity: shadowed ? 0.6 : 1 }}>
+                                {shadowed && <span style={{ marginRight: 2, textDecoration: 'none', display: 'inline-block' }}>⚠</span>}
+                                {b.value > 0 ? '+' : ''}{b.value} {b.stat} ({b.type})
+                              </span>
+                            );
+                          })}
                         </div>
                       )}
                       {entry.notes && (
@@ -413,7 +457,7 @@ export default function InventoryView() {
                       {/* Equip toggle */}
                       {def?.slot !== 'none' && def?.slot && (
                         <button
-                          onClick={() => toggleItemEquipped(entry.id)}
+                          onClick={() => handleToggleEquipped(entry.id)}
                           style={{
                             background: entry.equipped ? 'linear-gradient(135deg, #7a4f1a, #c8962e)' : 'transparent',
                             border: `1px solid ${entry.equipped ? '#c8962e' : '#253249'}`,

@@ -236,7 +236,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (activeCharacter) dispatch({ type: 'UPDATE_CHARACTER', payload: removeInventoryItem(activeCharacter, entryId) });
     },
     toggleItemEquipped: (entryId) => {
-      if (activeCharacter) dispatch({ type: 'UPDATE_CHARACTER', payload: toggleEquipped(activeCharacter, entryId) });
+      if (activeCharacter) {
+        const { character } = toggleEquipped(activeCharacter, entryId);
+        dispatch({ type: 'UPDATE_CHARACTER', payload: character });
+      }
     },
     updateItemQuantity: (entryId, qty) => {
       if (activeCharacter) dispatch({ type: 'UPDATE_CHARACTER', payload: updateInventoryItemQuantity(activeCharacter, entryId, qty) });

@@ -319,13 +319,41 @@ export function removeInventoryItem(character: Character, entryId: string): Char
   };
 }
 
-export function toggleEquipped(character: Character, entryId: string): Character {
+export function toggleEquipped(
+  character: Character,
+  entryId: string
+): { character: Character; displaced: string | null } {
+  const entry = (character.inventory ?? []).find(i => i.id === entryId);
+  if (!entry) return { character, displaced: null };
+
+  const isEquipping = !entry.equipped;
+  const allItems = [...getAllItems(), ...(character.customItems ?? [])];
+  const itemDef = allItems.find(i => i.id === entry.itemId);
+  const slot = itemDef?.slot;
+
+  let inventory = character.inventory ?? [];
+  let displaced: string | null = null;
+
+  if (isEquipping && slot && slot !== 'none') {
+    // Ring allows 2 simultaneously, all other slots allow 1
+    const maxPerSlot = slot === 'ring' ? 2 : 1;
+    const occupants = inventory.filter(
+      e => e.id !== entryId && e.equipped && allItems.find(i => i.id === e.itemId)?.slot === slot
+    );
+    if (occupants.length >= maxPerSlot) {
+      const evicted = occupants[0];
+      displaced = allItems.find(i => i.id === evicted.itemId)?.name ?? evicted.itemId;
+      inventory = inventory.map(i => i.id === evicted.id ? { ...i, equipped: false } : i);
+    }
+  }
+
   return {
-    ...character,
-    inventory: (character.inventory ?? []).map(i =>
-      i.id === entryId ? { ...i, equipped: !i.equipped } : i
-    ),
-    updatedAt: Date.now(),
+    character: {
+      ...character,
+      inventory: inventory.map(i => i.id === entryId ? { ...i, equipped: !entry.equipped } : i),
+      updatedAt: Date.now(),
+    },
+    displaced,
   };
 }
 
@@ -400,7 +428,7 @@ export function removeCustomItem(character: Character, itemId: string): Characte
   };
 }
 
-const STACKABLE_BONUS_TYPES: BonusType[] = ['dodge', 'untyped'];
+export const STACKABLE_BONUS_TYPES: BonusType[] = ['dodge', 'untyped'];
 
 export function computeEffectiveStats(
   character: Character,
@@ -472,6 +500,48 @@ export function computeEffectiveStats(
     effectiveAC,
     bonusByType,
   };
+}
+
+// Returns a map of inventoryItemId -> Set of bonus indices that are shadowed
+// (i.e., another equipped item already provides a higher bonus of the same type to the same stat)
+export function getEquippedBonusConflicts(character: Character): Map<string, Set<number>> {
+  const allItems = [...getAllItems(), ...(character.customItems ?? [])];
+  const equipped = (character.inventory ?? []).filter(e => e.equipped);
+
+  type BonusRecord = { entryId: string; bonusIdx: number; value: number; type: BonusType; stat: StatKey };
+  const records: BonusRecord[] = [];
+
+  for (const entry of equipped) {
+    const itemDef = allItems.find(i => i.id === entry.itemId);
+    const bonuses = entry.customBonuses ?? itemDef?.bonuses ?? [];
+    bonuses.forEach((b, idx) => {
+      records.push({ entryId: entry.id, bonusIdx: idx, value: b.value, type: b.type as BonusType, stat: b.stat as StatKey });
+    });
+  }
+
+  const shadowed = new Map<string, Set<number>>();
+
+  // Group by stat + type; stackable types never shadow each other
+  const groups = new Map<string, BonusRecord[]>();
+  for (const r of records) {
+    if (STACKABLE_BONUS_TYPES.includes(r.type)) continue;
+    const key = `${r.stat}:${r.type}`;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key)!.push(r);
+  }
+
+  for (const group of groups.values()) {
+    if (group.length <= 1) continue;
+    const max = Math.max(...group.map(r => r.value));
+    for (const r of group) {
+      if (r.value < max) {
+        if (!shadowed.has(r.entryId)) shadowed.set(r.entryId, new Set());
+        shadowed.get(r.entryId)!.add(r.bonusIdx);
+      }
+    }
+  }
+
+  return shadowed;
 }
 
 // Recalculate spell slots for a character (e.g., after homebrew settings change)
